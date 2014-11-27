@@ -13,7 +13,7 @@ the following examples in the `UnitTest` namespace.
 
 Start by declaring your interface.
 
-```
+```C++
 namespace Example
 {
 	class Foo
@@ -35,7 +35,7 @@ your interface.
 
 Next, declare your class that implements the interface.
 
-```
+```C++
 namespace Example
 {
 	class FooCore : public Foo
@@ -53,7 +53,7 @@ You will note that there is nothing special needed when declaring this class.
 
 Next is the injection logic.
 
-```
+```C++
 namespace UnitTest
 {
 	INJECT(Example::Foo, Example::FooCore, Instance, ());
@@ -73,7 +73,7 @@ Parameter | Value | Description
 
 Here is an example of the two possible usages.
 
-```
+```C++
 bool InjectFooViaFactory(int value)
 {
 	auto factory = UnitTest::Inject<UnitTest::IFactory>::Resolve();
@@ -94,7 +94,7 @@ been defined (whereas the `IFactory` method does not).
 
 And finally, here is an example of a second class where `Foo` would be injected.
 
-```
+```C++
 namespace Example
 {
 	class Bar
