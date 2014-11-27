@@ -1,11 +1,9 @@
 #pragma once
 #if defined(_WINDOWS_)
+#include "Detour.h"
 #include "TestException.h"
 #include <functional>
-#include <array>
 #include <exception>
-#include <cstring>
-#include <memory>
 
 namespace UnitTest
 {
@@ -53,7 +51,7 @@ private:
 	#endif
 	using Instruction = unsigned char;
 	using JumpInstruction = std::array<Instruction, JumpInstructionSize>;
-	
+
 public:
 	class ApiMockSetup;
 
@@ -65,18 +63,14 @@ public:
 	{
 	public:
 		ApiMockSetup(Callback callback)
-			: callback(callback)
+			: callback{ callback }, detour{ Address, &Intercept::Intercept }
 		{
 			currentSetup = this;
-			originalInstructions = ReadOriginalInstructions();
-			WriteInstructions(CreateJumpInstruction());
 		}
 		~ApiMockSetup()
 		{
 			currentSetup = nullptr;
-			auto safeToThrow = !std::uncaught_exception();
-			try { WriteInstructions(originalInstructions); } catch(...) { if (safeToThrow) throw; }
-			if (safeToThrow && callCount != expectedCallCount)
+			if (callCount != expectedCallCount && !std::uncaught_exception())
 				throw TestException{ "Setup not matched." };
 		}
 
@@ -87,65 +81,10 @@ public:
 
 	public:
 		Callback callback;
+		Detour detour;
 		int callCount = 0;
 		int expectedCallCount = 1;
-		JumpInstruction originalInstructions;
 	};
-
-private:
-	static JumpInstruction ReadOriginalInstructions()
-	{
-		JumpInstruction originalInstructions;
-		auto result = ::ReadProcessMemory(
-			::GetCurrentProcess(),
-			reinterpret_cast<void*>(Address),
-			originalInstructions.data(),
-			originalInstructions.size(),
-			nullptr);
-		if (!result)
-			throw TestException{ "ReadProcessMemory" };
-		return originalInstructions;
-	}
-
-	static JumpInstruction CreateJumpInstruction()
-	{
-		JumpInstruction jumpToIntercept;
-		#if defined(_M_X64)
-		const Instruction move1 = 0x48;
-		const Instruction move2 = 0xb8;
-		const Instruction jump1 = 0xff;
-		const Instruction jump2 = 0xe0;
-		jumpToIntercept[0] = move1;
-		jumpToIntercept[1] = move2;
-		auto intercept = &Intercept::Intercept;
-		std::memcpy(jumpToIntercept.data() + 2, reinterpret_cast<void*>(&intercept), sizeof(intercept));
-		static_assert(sizeof(intercept) == 8, "Expected 64-bit pointer.");
-		jumpToIntercept[2 + sizeof(intercept)] = jump1;
-		jumpToIntercept[2 + sizeof(intercept) + 1] = jump2;
-		#else
-		const Instruction jumpRelative = 0xe9;
-		jumpToIntercept[0] = jumpRelative;
-		auto relativeOffset =
-			reinterpret_cast<char*>(&Intercept::Intercept) -
-			reinterpret_cast<char*>(Address) -
-			jumpToIntercept.size();
-		static_assert(sizeof(relativeOffset) == 4, "Expected 32-bit offset.");
-		std::memcpy(jumpToIntercept.data() + 1, &relativeOffset, sizeof(relativeOffset));
-		#endif
-		return jumpToIntercept;
-	}
-
-	static void WriteInstructions(JumpInstruction instructions)
-	{
-		auto result = ::WriteProcessMemory(
-			::GetCurrentProcess(),
-			reinterpret_cast<void*>(Address),
-			instructions.data(),
-			instructions.size(),
-			nullptr);
-		if (!result)
-			throw TestException{ "WriteProcessMemory" };
-	}
 
 public:
 	static std::unique_ptr<ApiMockSetup> Setup(Callback value)

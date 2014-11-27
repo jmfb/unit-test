@@ -9,4 +9,5 @@
 #include "InjectMacro.h"
 #include "Mock.h"
 #include "ApiMock.h"
+#include "ClassMock.h"
 

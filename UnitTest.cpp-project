@@ -5,6 +5,8 @@
 		<Warnings>all</Warnings>
 		<WarningsAsErrors>True</WarningsAsErrors>
 		<OptimizationLevel>4</OptimizationLevel>
+		<Target>EXE</Target>
+		<Architecture>32-bit</Architecture>
 		<DebugInfo>False</DebugInfo>
 		<Multithreaded>True</Multithreaded>
 		<OutputFolder>output</OutputFolder>
@@ -71,6 +73,8 @@
 			<File>FunctionHelper.h</File>
 			<File>TypeName.h</File>
 			<File>ApiMock.h</File>
+			<File>Detour.h</File>
+			<File>ClassMock.h</File>
 		</Folder>
 		<File>UnitTest.h</File>
 	</Files>
