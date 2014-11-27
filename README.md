@@ -126,3 +126,88 @@ namespace UnitTest
 	INJECT(Example::Bar, Example::BarCore, Singleton, (Foo*));
 }
 ```
+
+# Test Harness
+
+First, declare your test class and unit tests.
+
+```C++
+namespace Example
+{
+	TEST_CLASS(BarCoreTest)
+	{
+	public:
+		BarCoreTest()
+		{
+		}
+		static void InitializeTests()
+		{
+		}
+		static void TerminateTests()
+		{
+		}
+		void BeginTest() override
+		{
+		}
+		void EndTest() override
+		{
+		}
+		TEST_METHOD(FuncWhenFooTrue)
+		{
+			const auto value = 55;
+			UnitTest::Mock<IFoo> mockFoo;
+			mockFoo.Setup(&Foo::Func, value).Returns(true);
+			Bar bar{ mockFoo.GetObject() };
+			auto result = bar.Func(value);
+			Assert.AreEqual(value, result);
+			mockFoo.Verify();
+		}
+	};
+}
+```
+
+You will most likely want to put your test class in the same namespace as the class
+you are testing. Recommended naming convention is the name of the class followed by `Test`.
+You must define the default constructor (this is needed by part of the auto-registration
+mechanism used for unit test discovery). You may optionally define any of the following
+functions:
+
+Note: If any of these functions fail, the unit tests will also be marked as failed even if they passed.
+Function | When Called
+-------- | -----------
+`InitializeTests` | Called once before any unit tests in this class are called in order to initialize any static variables.
+`TerminateTests` | Called once after all unit tests in this class have finished in order to clean up any static variables.
+`BeginTest` | Called once before each unit test is run to initialize any non-static member variables.
+`EndTest` | Called once after each unit test is run to clean up any non-static member variables.
+
+Test classes are defined using the `TEST_CLASS` macro. This macro expands into a class for
+getting the name of the test class and declares the named test class derived from the
+`TestClass` template class which will perform auto-registration used for unit test discovery.
+
+Test methods are defined using the `TEST_METHOD` macro. This macro expands into a class for
+getting the name of the unit test and executing it given an instance of the test class.
+It subsequently begins the method definition with the `void()` signature.
+
+Next, you can run unit tests with the following code. Note that you could hook up the unit
+test results into another unit test framework system by implementing a different `ITestRun`
+implementation.
+
+```C++
+int main()
+{
+	UnitTest::TestRunWriter writer{ std::cout };
+	UnitTest::TestRunner::RunTests(writer);
+	return 0;
+}
+```
+
+The following uses the built in command line interface for running specific tests.
+
+```C++
+int main(int argc, char* argv[])
+{
+	UnitTest::TestRunner::RunTestsFromCommandLine(argc, argv);
+	return 0;
+}
+```
+
