@@ -6,6 +6,9 @@
 #include <cstring>
 #include <stdexcept>
 
+namespace UnitTest
+{
+
 class Detour
 {
 public:
@@ -132,6 +135,8 @@ private:
 	void* overwriteAddress = nullptr;
 	JumpInstruction originalInstructions;
 };
+
+}
 
 #endif
 

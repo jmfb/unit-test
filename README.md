@@ -289,7 +289,7 @@ BOOL __stdcall SomeApi(const APISTRUCT* in, APISTRUCT* out);
 // ...
 TEST_METHOD(CallsSomeApi)
 {
-	auto mockSomeApi = UnitTest::ApiMock<decltype(&::SomeApi), &::SomeApi>::Setup(
+	UnitTest::ApiMock<decltype(&::SomeApi), &::SomeApi> mockSomeApi(
 		[](const APISTRUCT* in, APISTRUCT* out)
 		{
 			Assert.IsNotNull(in);
@@ -312,8 +312,43 @@ a jump instruction to an intercept function in place of the original function.  
 x64 instruction sets are supported.  Once the mock goes out of scope it will automatically
 put back the original instructions that were overwritten and verify the mock was called.
 
-This versoin of the mock does not support parameter matching, multuple setups, etc.  This is
+This version of the mock does not support parameter matching, multiple setups, etc.  This is
 because API interfaces don't generally support the type of interfaces where these make sense.
 They have pointer arguments, output parameters, don't throw exceptions, etc.  For these reasons
-the implementation only supports the callback version of a setup.  An `Expects` function is provided
-on the returned mock for expected number of calls but it was not implemented using fluent interfaces.
+the implementation only supports the callback version of a setup.  An `Expects` function is provided.
+
+## Class Member Function Mocking
+
+Mocking class member functions is supported though not by instance.
+
+```C++
+class Foo
+{
+public:
+	int Func(int value) { /*...*/ }
+};
+// ...
+TEST_METHOD(CallFunc)
+{
+	UnitTest::ClassMock<decltype(&Foo::Func), &Foo::Func> mockFooFunc(
+		[](Foo* self, int value)
+		{
+			//self refers to the instance Foo whose Func call was intercepted.
+			Assert.AreEqual(100, value);
+			return 200;
+		});
+	Foo foo;
+	auto result = foo.Func(100);
+	Assert.AreEqual(200, result);
+}
+```
+
+The `ClassMock` class can be used to mock calls to non-virtual class member functions.
+This is acheived by using a detour to reroute calls to the member function to an
+intercept function.  That function will in turn call the callback function with which
+you constructed the mock.  The fluent interface supports `Expects`.
+
+This version of the mock does not support parameter matching, multiple setups, etc.
+This is primarily because these are not instance based mocks.  It would be possible
+to extend this solution in that respect (even matching instance) but it would have
+to extend the detour library to support call-through to the original function.

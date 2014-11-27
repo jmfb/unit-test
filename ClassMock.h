@@ -6,6 +6,9 @@
 #include <functional>
 #include <utility>
 
+namespace UnitTest
+{
+
 template <typename MemberFunction, MemberFunction Address>
 class ClassMock
 {
@@ -83,6 +86,8 @@ private:
 
 template <typename MemberFunction, MemberFunction Address>
 ClassMock<MemberFunction, Address>* ClassMock<MemberFunction, Address>::currentMock = nullptr;
+
+}
 
 #endif
 
