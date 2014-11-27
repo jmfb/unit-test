@@ -1,0 +1,78 @@
+<Project name="UnitTest">
+	<Settings>
+		<Standard>c++11</Standard>
+		<Subsystem>windows</Subsystem>
+		<Warnings>all</Warnings>
+		<WarningsAsErrors>True</WarningsAsErrors>
+		<OptimizationLevel>4</OptimizationLevel>
+		<DebugInfo>False</DebugInfo>
+		<Multithreaded>True</Multithreaded>
+		<OutputFolder>output</OutputFolder>
+		<OutputFileName>{ProjectName}.exe</OutputFileName>
+		<IncludeDirectories/>
+		<Libraries/>
+	</Settings>
+	<Files>
+		<Folder name="Test Classes">
+			<File>TestResult.h</File>
+			<File>TestRepository.h</File>
+			<File>TestException.h</File>
+			<File>TestAssert.h</File>
+			<Folder name="TestRun">
+				<File>ITestRun.h</File>
+				<File>TestRunWriter.h</File>
+				<File>TestRunner.h</File>
+			</Folder>
+			<Folder name="TestMethodFactory">
+				<File>ITestMethodFactory.h</File>
+				<File>TestMethodFactory.h</File>
+			</Folder>
+			<Folder name="TestMethod">
+				<File>ITestMethod.h</File>
+				<File>TestMethod.h</File>
+				<File>TestMethodRegister.h</File>
+			</Folder>
+			<Folder name="TestClass">
+				<File>ITestClass.h</File>
+				<File>TestClass.h</File>
+				<File>TestClassRegister.h</File>
+			</Folder>
+			<Folder name="TestClassFactory">
+				<File>ITestClassFactory.h</File>
+				<File>TestClassFactory.h</File>
+			</Folder>
+		</Folder>
+		<Folder name="Inject Classes">
+			<Folder name="Factory">
+				<File>IFactory.h</File>
+				<File>Factory.h</File>
+			</Folder>
+			<Folder name="Lifetime">
+				<File>InjectRegister.h</File>
+				<File>InjectInstance.h</File>
+				<File>InjectSingleton.h</File>
+			</Folder>
+			<File>TupleFromFunctionArgumentList.h</File>
+			<File>Inject.h</File>
+			<File>InjectMacro.h</File>
+		</Folder>
+		<Folder name="Mock Classes">
+			<File>Any.h</File>
+			<File>ArgumentList.h</File>
+			<File>CallData.h</File>
+			<File>Const.h</File>
+			<File>ForcedCast.h</File>
+			<File>Mock.h</File>
+			<File>OffsetHelper.h</File>
+			<File>PackParameters.h</File>
+			<File>ReturnValue.h</File>
+			<File>SetupData.h</File>
+			<File>VirtualTable.h</File>
+			<File>FunctionHelper.h</File>
+			<File>TypeName.h</File>
+			<File>ApiMock.h</File>
+		</Folder>
+		<File>UnitTest.h</File>
+	</Files>
+</Project>
+
