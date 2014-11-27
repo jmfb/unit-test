@@ -155,7 +155,7 @@ namespace Example
 		TEST_METHOD(FuncWhenFooTrue)
 		{
 			const auto value = 55;
-			UnitTest::Mock<IFoo> mockFoo;
+			UnitTest::Mock<Foo> mockFoo;
 			mockFoo.Setup(&Foo::Func, value).Returns(true);
 			Bar bar{ mockFoo.GetObject() };
 			auto result = bar.Func(value);
@@ -173,6 +173,7 @@ mechanism used for unit test discovery). You may optionally define any of the fo
 functions:
 
 Note: If any of these functions fail, the unit tests will also be marked as failed even if they passed.
+
 Function | When Called
 -------- | -----------
 `InitializeTests` | Called once before any unit tests in this class are called in order to initialize any static variables.
@@ -211,3 +212,108 @@ int main(int argc, char* argv[])
 }
 ```
 
+# Mock Objects
+
+## Interface Mocking
+
+You may have noticed the `Mock` usage in the previous example. The `Mock` template class allows
+you to "mock" the implementation of a given interface by creating placeholder functions for
+virtual function calls on the interface at run time.
+
+Calls to `Setup` take a member function pointer to either the interface or a base interface.
+This will be followed by N parameters where N is the number of arguments to the member function.
+Each parameter must be convertible to the corresponding argument type or be the enum value
+`UnitTest::Any::Match`. These parameters are used for argument list matching. The return value
+from `Setup` is a `SetupData` class that can be used to further define the mock usage using the
+following functions which can all be chained using fluent interfaces.
+
+Function | Description
+-------- | -----------
+Returns | Sets the return value to the function. This function is only present if the return value of the function is not void.
+Expects | Sets the number of calls this function should expect. The default value is 1.
+Throws | Sets the exception that will be thrown when the function is invoked.
+Callback | Sets a callback function (usually a lambda expression) to be called with the actual function arguments when the function is invoked. The parameters of the callback function must be convertible from the actual function parameters. Note that if `Throws` was specified the callback will occur prior to the exception being thrown.
+
+```C++
+TEST_METHOD(Func)
+{
+	UnitTest::Mock<Foo> mockFoo;
+	mockFoo
+		.Setup(&Foo::Func, 55)
+		.Returns(true)
+		.Expects(2)
+		.Callback([](int value){ std::cout << "Callback " << value << std::endl; })
+		.Throws(std::runtime_error{ "exception" });
+	SomeFuncThatDoesAllOfThis(mockFoo.GetObject());
+	mockFoo.Verify();
+}
+```
+
+The `GetObject` function returns a smart pointer to the mocked interface where the deleter
+object has been replaced with an empty lambda. This allows the fake interface to be used by
+clients expecting the smart pointer but without causing the eventual call to delete on the
+fake interface.
+
+The `Verify` function verifies that all functions calls that were expected were called and
+the correct number of times. This is not done in the `Mock` destructor automatically since
+it would violate the design principle of "never throw from a destructor" (revisit when C++17
+implements the `std::uncaught_exceptions` function).
+
+If a function is called that is not mocked then an exception will be thrown stating there
+was no mock implementation for the function at offset X where X is the index into the
+v-table of the function that was called. This is as much information that is discernible
+from an errant function call at run time.
+
+## Internal Implementation of Mock Class
+
+The mock class uses a few tricks to get run time interfaces to work.
+
+First is the layout of classes that contain a v-table. This framework will work with any
+compiler where the v-table is the first item of the class and the v-table is a series of
+normal function pointers.
+
+Second is the layout of class member functions. This framework will work with any compiler
+where the member function is generated as a normal function with an additional first parameter
+that is the `this` pointer to the class.
+
+Thirdly is a compiler template expansion limitation for recursive template expansion.
+The `"Const.h"` file contains a constant for the maximum number of virtual functions in a
+class which is currently set at 50. This is needed because there is no current way to get
+the offset of a function in the v-table for a class at compile time so a run time call must
+be made with placeholders in place for all possible index values.
+
+## API Mocking
+
+```C++
+BOOL __stdcall SomeApi(const APISTRUCT* in, APISTRUCT* out);
+// ...
+TEST_METHOD(CallsSomeApi)
+{
+	auto mockSomeApi = UnitTest::ApiMock<decltype(&::SomeApi), &::SomeApi>::Setup(
+		[](const APISTRUCT* in, APISTRUCT* out)
+		{
+			Assert.IsNotNull(in);
+			Assert.AreEqual(100, in->value);
+			Assert.IsNotNull(out);
+			out->value = 200;
+			return TRUE;
+		});
+	APISTRUCT in;
+	APISTRUCT out;
+	in.value = 100;
+	auto result = ::SomeApi(&in, &out);
+	Assert.AreEqual(TRUE, result);
+	Assert.AreEqual(200, out.value);
+}
+```
+
+The `ApiMock` class can be used to mock calls to API functions.  This is achieved by writing
+a jump instruction to an intercept function in place of the original function.  Both x86 and
+x64 instruction sets are supported.  Once the mock goes out of scope it will automatically
+put back the original instructions that were overwritten and verify the mock was called.
+
+This versoin of the mock does not support parameter matching, multuple setups, etc.  This is
+because API interfaces don't generally support the type of interfaces where these make sense.
+They have pointer arguments, output parameters, don't throw exceptions, etc.  For these reasons
+the implementation only supports the callback version of a setup.  An `Expects` function is provided
+on the returned mock for expected number of calls but it was not implemented using fluent interfaces.
