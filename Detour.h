@@ -5,6 +5,7 @@
 #include <array>
 #include <cstring>
 #include <stdexcept>
+#include "ForcedCast.h"
 
 namespace UnitTest
 {
@@ -125,10 +126,25 @@ private:
 			throw std::runtime_error{ "WriteProcessMemory" };
 	}
 
-	template <typename Function>
-	void* PointerToFunction(Function function)
+	template <typename ReturnValue, typename... Arguments>
+	void* PointerToFunction(ReturnValue (__stdcall* function)(Arguments...))
 	{
-		return *reinterpret_cast<void**>(&function);
+		return ForcedCast<void*>(function);
+	}
+
+	template <typename ReturnValue, typename Class, typename... Arguments>
+	void* PointerToFunction(ReturnValue (Class::* memberFunction)(Arguments...))
+	{
+#if defined(__GNUG__)
+		struct PointerToMemberFunction
+		{
+			void* Function;
+			std::ptrdiff_t Offset;
+		};
+		return ForcedCast<PointerToMemberFunction>(memberFunction).Function;
+#else
+		return ForcedCast<void*>(memberFunction);
+#endif
 	}
 
 private:
