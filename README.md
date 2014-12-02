@@ -352,3 +352,7 @@ This version of the mock does not support parameter matching, multiple setups, e
 This is primarily because these are not instance based mocks.  It would be possible
 to extend this solution in that respect (even matching instance) but it would have
 to extend the detour library to support call-through to the original function.
+
+Warning: Usage of this class is precarious when, depending on compiler options, the
+function gets inlined.  Overwriting the original function has no effect on any of the
+inlined callers.
