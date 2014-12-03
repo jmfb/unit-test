@@ -48,7 +48,7 @@ private:
 		++callCount;
 		callback(std::forward<Arguments>(arguments)...);
 	}
-	
+
 	template <typename ReturnValue, typename... Arguments>
 	class Interceptor
 	{
@@ -83,6 +83,8 @@ template <typename Function, Function Address>
 ApiMock<Function, Address>* ApiMock<Function, Address>::currentMock = nullptr;
 
 }
+
+#define API_MOCK(function) UnitTest::ApiMock<decltype(&function), &function>
 
 #endif
 

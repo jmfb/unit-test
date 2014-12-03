@@ -4,6 +4,7 @@
 #include <functional>
 #include <exception>
 #include "TestException.h"
+#include "TypeName.h"
 
 namespace UnitTest
 {
@@ -102,8 +103,47 @@ public:
 		}
 		TestException::Raise("Assert.ThrowsType", "expected", expectedMessage, "actual", "No exception was thrown.", message);
 	}
-	//TODO: AreSame
-	//TODO: AreNotSame
+	template <typename T>
+	static void ThrowsType(std::function<void()> action, std::function<void(const T&)> callback, const std::string& message = "")
+	{
+		try
+		{
+			action();
+			TestException::Raise("Assert.ThrowsType", "expected", TypeName<T>::Get(), "actual", "No exception was thrown.", message);
+		}
+		catch (const TestException& exception)
+		{
+			throw;
+		}
+		catch (const T& exception)
+		{
+			callback(exception);
+		}
+	}
+	template <typename T>
+	static void AreSame(const T& expected, const T& actual, const std::string& message = "")
+	{
+		if (std::addressof(expected) != std::addressof(actual))
+			TestException::Raise(
+				"Assert.AreSame",
+				"expected",
+				std::addressof(expected),
+				"actual",
+				std::addressof(actual),
+				message);
+	}
+	template <typename T>
+	static void AreNotSame(const T& notExpected, const T& actual, const std::string& message = "")
+	{
+		if (std::addressof(notExpected) == std::addressof(actual))
+			TestException::Raise(
+				"Assert.AreNotSame",
+				"notExpected",
+				std::addressof(notExpected),
+				"actual",
+				std::addressof(actual),
+				message);
+	}
 	//TODO: StringAssert helpers
 	//TODO: CollectionAssert helpers
 };

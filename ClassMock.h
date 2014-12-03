@@ -89,5 +89,7 @@ ClassMock<MemberFunction, Address>* ClassMock<MemberFunction, Address>::currentM
 
 }
 
+#define CLASS_MOCK(function) UnitTest::ClassMock<decltype(&function), &function>
+
 #endif
 
