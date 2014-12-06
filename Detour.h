@@ -133,7 +133,19 @@ private:
 	}
 
 	template <typename ReturnValue, typename Class, typename... Arguments>
+	void* PointerToFunction(ReturnValue (Class::* memberFunction)(Arguments...) const)
+	{
+		return GetMemberFunctionPointer(memberFunction);
+	}
+
+	template <typename ReturnValue, typename Class, typename... Arguments>
 	void* PointerToFunction(ReturnValue (Class::* memberFunction)(Arguments...))
+	{
+		return GetMemberFunctionPointer(memberFunction);
+	}
+
+	template <typename MemberFunction>
+	void* GetMemberFunctionPointer(MemberFunction memberFunction)
 	{
 #if defined(__GNUG__)
 		struct PointerToMemberFunction
