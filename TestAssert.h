@@ -32,6 +32,12 @@ public:
 		if (value == nullptr)
 			TestException::Raise("Assert.IsNotNull", message);
 	}
+	template <typename Container>
+	static void IsEmpty(const Container& actual, const std::string& message = "")
+	{
+		if (!actual.empty())
+			TestException::Raise("Assert.IsEmpty", message);
+	}
 	template <typename T1, typename T2>
 	static void AreEqual(const T1& expected, const T2& actual, const std::string& message = "")
 	{
